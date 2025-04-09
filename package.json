@@ -1,0 +1,43 @@
+{
+  "name": "sql-on-fhir-toolkit-vscode",
+  "displayName": "sql-on-fhir-toolkit-vscode",
+  "description": "A VS Code extension providing tools for validation and generation of content based on the SQL on FHIR® specification.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sql-on-fhir-toolkit-vscode.validateViewDefinitionInstance",
+        "title": "sql-on-fhir-toolkit-vscode: Validate a View Definition instance"
+      },
+      {
+        "command": "sql-on-fhir-toolkit-vscode.getColumns",
+        "title": "sql-on-fhir-toolkit-vscode: Get columns"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.99.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.21.0"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "fhirpath": "^4.0.0"
+  }
+}
