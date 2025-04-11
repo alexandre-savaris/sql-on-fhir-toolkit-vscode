@@ -22,6 +22,10 @@
         "title": "sql-on-fhir-toolkit-vscode: Generate DDL for the View Definition instance"
       },
       {
+        "command": "sql-on-fhir-toolkit-vscode.generateDmlForDataset",
+        "title": "sql-on-fhir-toolkit-vscode: Generate DML for the dataset"
+      },
+      {
         "command": "sql-on-fhir-toolkit-vscode.getColumns",
         "title": "sql-on-fhir-toolkit-vscode: Get columns"
       }
