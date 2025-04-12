@@ -131,85 +131,65 @@ function activate(context) {
 				return;
 			}
 
-			let datasetContent = null;
-			let jsonDatasetContent = null;
-			let viewDefinitionContent = null;
-			let jsonViewDefinitionContent = null;
+			let activeTextEditor = null;
 
-			// First tab: the dataset.
-			const firstEditorTab = firstGroup.tabs[0];
-			if (firstEditorTab.input instanceof vscode.TabInputText) {
-				vscode.workspace.openTextDocument(firstEditorTab.input.uri).then(document => {
-					datasetContent = document.getText();
-					console.log(datasetContent);
-				});
+			// Asynchronous block to allow calling the "showTextDocument" method synchronously.
+			(async () => {
+
+				// First tab: the dataset.
+				const firstEditorTab = firstGroup.tabs[0];
+				await vscode.window.showTextDocument(firstEditorTab.input);
+				activeTextEditor = vscode.window.activeTextEditor;
+				// Retrieve content from the active text editor.
+				const datasetContent = activeTextEditor.document.getText();
 				// Parse the retrieved content as JSON.
-				jsonDatasetContent = JSON.parse(datasetContent);
-			} else {
-				vscode.window.showErrorMessage('The first tab is not a text editor.');
-				return;
-			}
+				const jsonDatasetContent = JSON.parse(datasetContent);
 
-			// Second tab: the view definition.
-			const secondEditorTab = firstGroup.tabs[1];
-			if (secondEditorTab.input instanceof vscode.TabInputText) {
-				vscode.workspace.openTextDocument(secondEditorTab.input.uri).then(document => {
-					viewDefinitionContent = document.getText();
-				});
+				// Second tab: the view definition.
+				const secondEditorTab = firstGroup.tabs[1];
+				await vscode.window.showTextDocument(secondEditorTab.input);
+				activeTextEditor = vscode.window.activeTextEditor;
+				// Retrieve content from the active text editor.
+				const viewDefinitionInstance = activeTextEditor.document.getText();
 				// Parse the retrieved content as JSON.
-				jsonViewDefinitionContent = JSON.parse(viewDefinitionContent);
-			} else {
-				vscode.window.showErrorMessage('The first tab is not a text editor.');
-				return;
-			}
+				const jsonViewDefinitionInstance = JSON.parse(viewDefinitionInstance);
+				// Retrieve the resource name from the View Definition instance.
+				const resourceName = snakeCase(path.fhirpath_evaluate(jsonViewDefinitionInstance, 'resource')[0]);
 
-			// Validate the View Definition instance.
-			const validateViewDefinitionInstanceReturn = validateViewDefinitionInstance(jsonViewDefinitionContent);
-			if (validateViewDefinitionInstanceReturn) {
-				vscode.window.showErrorMessage(validateViewDefinitionInstanceReturn);
-				return;
-			}
+				// Validate the View Definition instance.
+				const validateViewDefinitionInstanceReturn = validateViewDefinitionInstance(jsonViewDefinitionInstance);
+				if (validateViewDefinitionInstanceReturn) {
+					vscode.window.showErrorMessage(validateViewDefinitionInstanceReturn);
+					return;
+				}
 
-			// Evaluate the dataset using the View Definition instance.
-			console.log(jsonViewDefinitionContent);
-			console.log(jsonDatasetContent);
-			const evaluateReturn = sof_js.evaluate(jsonViewDefinitionContent, jsonDatasetContent);
-			console.log(evaluateReturn);
+				// Evaluate the dataset using the View Definition instance.
+				const evaluateReturn = sof_js.evaluate(jsonViewDefinitionInstance, jsonDatasetContent);
 
-			// // Retrieve content from the text editors.
-			// let jsonDatasetContent = null;
-			// let jsonViewDefinitionContent = null;
-			// if (vscode.window.tabGroups.all.length > 0) {
-			// 	const firstGroup = vscode.window.tabGroups.all[0];
-			// 	if (firstGroup.tabs.length > 0) {
-			// 		// First tab: the dataset.
-			// 		const firstEditorTab = firstGroup.tabs[0];
-			// 		if (firstEditorTab.input instanceof vscode.TabInputText) {
-			// 			vscode.workspace.openTextDocument(firstEditorTab.input.uri).then(document => {
-			// 				const datasetContent = document.getText();
-			// 				// Parse the retrieved content as JSON.
-			// 				jsonDatasetContent = JSON.parse(datasetContent);
-			// 			});
-			// 		} else {
-			// 			console.log('The first tab is not a text editor.');
-			// 		}
-			// 		// Second tab: the view definition.
-			// 		const secondEditorTab = firstGroup.tabs[1];
-			// 		if (secondEditorTab.input instanceof vscode.TabInputText) {
-			// 			vscode.workspace.openTextDocument(secondEditorTab.input.uri).then(document => {
-			// 				const viewDefinitionContent = document.getText();
-			// 				// Parse the retrieved content as JSON.
-			// 				jsonViewDefinitionContent = JSON.parse(viewDefinitionContent);
-			// 			});
-			// 		} else {
-			// 			console.log('The first tab is not a text editor.');
-			// 		}
-			// 	} else {
-			// 		console.log('No tabs in the first group.');
-			// 	}
-			// } else {
-			// 	console.log('No editor groups open.');
-			// }
+				// Loop through the evaluated dataset, generating the SQL insert statements.
+				evaluateReturn.forEach((resourceInstance) => {
+					let index = 0;
+					let columnsAsString = '';
+					let valuesAsString = '';
+					for (const [key, value] of Object.entries(resourceInstance)) {
+						if (index !== 0) {
+							columnsAsString += ', ';
+							valuesAsString += ', ';
+						}
+						columnsAsString += snakeCase(key);
+						valuesAsString += `'${value}'`;
+						index++;
+					}
+					// Format the SQL output.
+					const dml = format('insert into ? ( ? ) values ( ? );', {
+						tabWidth: 4,
+						keywordCase: 'upper',
+						params: [resourceName, columnsAsString, valuesAsString],
+					});
+					console.log(dml);
+				});
+
+			})();
 
 		} catch(e) {
 			vscode.window.showErrorMessage(e.message);
