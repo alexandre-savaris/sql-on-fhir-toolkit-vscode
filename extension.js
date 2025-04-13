@@ -9,8 +9,6 @@ const validate = require('./src/lib/sof-js/validate.js');
 const sof_js = require('./src/lib/sof-js/sof-js.js');
 // For changing cases of table and column names.
 const { snakeCase } = require('change-case-all');
-// For formatting SQL instructions.
-const { format } = require('sql-formatter');
 // For parsing newline-delimited JSON content.
 const parseNDJSON = require( '@stdlib/utils-parse-ndjson' );
 
@@ -91,15 +89,11 @@ function activate(context) {
 						if (index !== 0) {
 							columnsListAsString += ', ';
 						}
-						columnsListAsString += snakeCase(column) + ': text';
+						columnsListAsString += snakeCase(column) + ' CHARACTER VARYING';
 						index++;
 					});
 					// Format the SQL output.
-					const ddl = format('create table ? ( ? );', {
-						tabWidth: 4,
-						keywordCase: 'upper',
-						params: [resourceName, columnsListAsString],
-					});
+					const ddl = `CREATE TABLE ${resourceName} ( ${columnsListAsString} );\n`;
 					// Create a new document with the SQL output.
 					vscode.workspace.openTextDocument({
 						content: ddl,
@@ -175,6 +169,8 @@ function activate(context) {
 				}
 
 				// Loop through the parsed dataset.
+				let dml = null;
+				let fullDml = '';
 				parseNDJSONReturn.forEach((ndJsonResourceInstance) => {
 
 					// Evaluate the resource instance using the View Definition instance.
@@ -195,15 +191,19 @@ function activate(context) {
 							index++;
 						}
 						// Format the SQL output.
-						const dml = format('insert into ? ( ? ) values ( ? );', {
-							tabWidth: 4,
-							keywordCase: 'upper',
-							params: [resourceName, columnsAsString, valuesAsString],
-						});
-						console.log(dml);
+						dml = `INSERT INTO ${resourceName} ( ${columnsAsString} ) values ( ${valuesAsString} );\n`;
 					});
 
+					fullDml += dml;
 				});
+
+				// Create a new document with the SQL output.
+				vscode.workspace.openTextDocument({
+					content: fullDml,
+					language: 'sql'
+					}).then(newDocument => {
+						vscode.window.showTextDocument(newDocument, vscode.ViewColumn.Beside);
+					});
 
 			})();
 
@@ -212,97 +212,9 @@ function activate(context) {
 		}
 	});
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable4 = vscode.commands.registerCommand('sql-on-fhir-toolkit-vscode.getColumns', function () {
-		// The code you place here will be executed every time your command is executed
-
-		try {
-
-			if (vscode.window.tabGroups.all.length > 0) {
-				const firstGroup = vscode.window.tabGroups.all[0];
-				if (firstGroup.tabs.length > 0) {
-					const firstEditorTab = firstGroup.tabs[0];
-					if (firstEditorTab.input instanceof vscode.TabInputText) {
-						vscode.workspace.openTextDocument(firstEditorTab.input.uri).then(document => {
-							const content = document.getText();
-							console.log('Content:', content);
-							// Do something with the content
-						});
-					} else {
-						console.log('The first tab is not a text editor.');
-					}
-				} else {
-					console.log('No tabs in the first group.');
-				}
-			} else {
-				console.log('No editor groups open.');
-			}
-
-			// vscode.commands.executeCommand('workbench.action.focusFirstEditorGroup');
-			// activeTextEditor = vscode.window.activeTextEditor;
-			// if (activeTextEditor) {
-			// 	const documentText1 = activeTextEditor.document.getText();
-			// 	console.log(documentText1);
-			// }
-
-			// vscode.commands.executeCommand('workbench.action.focusSecondEditorGroup');
-			// activeTextEditor = vscode.window.activeTextEditor;
-			// if (activeTextEditor) {
-			// 	const documentText2 = activeTextEditor.document.getText();
-			// 	console.log(documentText2);
-			// }
-
-		} catch(e) {
-			vscode.window.showErrorMessage(e.message);
-		}
-		
-
-
-		// // If there is an active text editor, use it.
-		// const activeTextEditor = vscode.window.activeTextEditor;
-		// if (activeTextEditor) {
-
-		// 	// Retrieve content from the active text editor.
-		// 	const documentText = activeTextEditor.document.getText();
-
-		// 	try {
-
-		// 		// Parse the retrieved content as JSON.
-		// 		const jsonContent = JSON.parse(documentText);
-
-		// 		// ???
-		// 		const getColumnsReturn = sof_js.get_columns(jsonContent);
-		// 		console.log(getColumnsReturn);
-
-		// 		// ???
-		// 		const patientInstance = '{"resourceType": "Patient","id": "pt1","name": [{"family": "F1"}],"active": true}';
-		// 		const getEvaluateReturn = sof_js.evaluate(jsonContent, JSON.parse(patientInstance));
-		// 		console.log(getEvaluateReturn);
-
-		// 		// // Validate the View Definition instance.
-		// 		// const errorsReturn = validate.errors(jsonContent);
-		// 		// if (errorsReturn) {
-		// 		// 	let messages = '';
-		// 		// 	errorsReturn.forEach((error) => {
-		// 		// 		messages += `Error: [${error.message}]\n`;
-		// 		// 	});
-		// 		// 	vscode.window.showErrorMessage(messages);
-		// 		// } else {
-		// 		// 	vscode.window.showInformationMessage('The View Definition is valid.');
-		// 		// }
-
-		// 	} catch(e) {
-		// 		vscode.window.showErrorMessage(e.message);
-		// 	}
-		// }
-	});
-
 	context.subscriptions.push(disposable);
 	context.subscriptions.push(disposable2);
 	context.subscriptions.push(disposable3);
-	context.subscriptions.push(disposable4);
 }
 
 // This method is called when your extension is deactivated

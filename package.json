@@ -24,10 +24,6 @@
       {
         "command": "sql-on-fhir-toolkit-vscode.generateDmlForDataset",
         "title": "sql-on-fhir-toolkit-vscode: Generate DML for the dataset"
-      },
-      {
-        "command": "sql-on-fhir-toolkit-vscode.getColumns",
-        "title": "sql-on-fhir-toolkit-vscode: Get columns"
       }
     ]
   },
@@ -47,9 +43,7 @@
   "dependencies": {
     "@stdlib/utils-parse-ndjson": "^0.1.1",
     "ajv": "^8.17.1",
-    "change-case": "^5.4.4",
     "change-case-all": "^2.1.0",
-    "fhirpath": "^4.0.0",
-    "sql-formatter": "^15.5.2"
+    "fhirpath": "^4.0.0"
   }
 }
