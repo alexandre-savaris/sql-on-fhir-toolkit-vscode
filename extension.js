@@ -11,6 +11,8 @@ const sof_js = require('./src/lib/sof-js/sof-js.js');
 const { snakeCase } = require('change-case-all');
 // For formatting SQL instructions.
 const { format } = require('sql-formatter');
+// For parsing newline-delimited JSON content.
+const parseNDJSON = require( '@stdlib/utils-parse-ndjson' );
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -142,8 +144,6 @@ function activate(context) {
 				activeTextEditor = vscode.window.activeTextEditor;
 				// Retrieve content from the active text editor.
 				const datasetContent = activeTextEditor.document.getText();
-				// Parse the retrieved content as JSON.
-				const jsonDatasetContent = JSON.parse(datasetContent);
 
 				// Second tab: the view definition.
 				const secondEditorTab = firstGroup.tabs[1];
@@ -163,30 +163,46 @@ function activate(context) {
 					return;
 				}
 
-				// Evaluate the dataset using the View Definition instance.
-				const evaluateReturn = sof_js.evaluate(jsonViewDefinitionInstance, jsonDatasetContent);
+				// Parse the newline-delimited JSON content.
+				const parseNDJSONReturn = parseNDJSON(datasetContent);
+				if (parseNDJSONReturn.message) {
+					vscode.window.showErrorMessage(`The input dataset must be a newline-delimited JSON: [ ${parseNDJSONReturn.message} ]`);
+					return;
+				}
+				if (!Array.isArray(parseNDJSONReturn)) {
+					vscode.window.showErrorMessage('The input dataset must be a newline-delimited JSON.');
+					return;
+				}
 
-				// Loop through the evaluated dataset, generating the SQL insert statements.
-				evaluateReturn.forEach((resourceInstance) => {
-					let index = 0;
-					let columnsAsString = '';
-					let valuesAsString = '';
-					for (const [key, value] of Object.entries(resourceInstance)) {
-						if (index !== 0) {
-							columnsAsString += ', ';
-							valuesAsString += ', ';
+				// Loop through the parsed dataset.
+				parseNDJSONReturn.forEach((ndJsonResourceInstance) => {
+
+					// Evaluate the resource instance using the View Definition instance.
+					const evaluateReturn = sof_js.evaluate(jsonViewDefinitionInstance, ndJsonResourceInstance);
+
+					// Loop through the evaluated dataset, generating the SQL insert statements.
+					evaluateReturn.forEach((resourceInstance) => {
+						let index = 0;
+						let columnsAsString = '';
+						let valuesAsString = '';
+						for (const [key, value] of Object.entries(resourceInstance)) {
+							if (index !== 0) {
+								columnsAsString += ', ';
+								valuesAsString += ', ';
+							}
+							columnsAsString += snakeCase(key);
+							valuesAsString += `'${value}'`;
+							index++;
 						}
-						columnsAsString += snakeCase(key);
-						valuesAsString += `'${value}'`;
-						index++;
-					}
-					// Format the SQL output.
-					const dml = format('insert into ? ( ? ) values ( ? );', {
-						tabWidth: 4,
-						keywordCase: 'upper',
-						params: [resourceName, columnsAsString, valuesAsString],
+						// Format the SQL output.
+						const dml = format('insert into ? ( ? ) values ( ? );', {
+							tabWidth: 4,
+							keywordCase: 'upper',
+							params: [resourceName, columnsAsString, valuesAsString],
+						});
+						console.log(dml);
 					});
-					console.log(dml);
+
 				});
 
 			})();

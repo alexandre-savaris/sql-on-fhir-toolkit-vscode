@@ -45,6 +45,7 @@
     "eslint": "^9.21.0"
   },
   "dependencies": {
+    "@stdlib/utils-parse-ndjson": "^0.1.1",
     "ajv": "^8.17.1",
     "change-case": "^5.4.4",
     "change-case-all": "^2.1.0",
