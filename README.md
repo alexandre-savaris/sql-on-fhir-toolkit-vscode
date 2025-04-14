@@ -1,65 +1,36 @@
-# sql-on-fhir-toolkit-vscode README
-
-This is the README for your extension "sql-on-fhir-toolkit-vscode". After writing up a brief description, we recommend including the following sections.
+# sql-on-fhir-toolkit-vscode
+A VS Code extension providing tools for validation and generation of content based on the [SQL on FHIR®2.0.0](https://sql-on-fhir.org/ig/2.0.0/) specification, using its [JavaScript Reference Implementation](https://github.com/FHIR/sql-on-fhir-v2).
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### 1. Validating a View Definition instance
+1.1. Open up a JSON file with the View Definition content;  
+1.2. Using the Command Palette ("View/Command Palette..." or Ctrl+Shift+P), execute the command "sql-on-fhir-toolkit-vscode: Validate the View Definition instance";  
+1.3. The validation result will be shown as a pop-up message in the bottom-right corner of the editor window.  
 
-For example if there is an image subfolder under your extension project workspace:
+![Validating a View Definition instance](resources/images/extension_usage_validate.gif)
 
-\!\[feature X\]\(images/feature-x.png\)
+### 2. Generating DDL instructions for the View Definition instance
+2.1. Open up a JSON file with the View Definition content;  
+2.2. Using the Command Palette ("View/Command Palette..." or Ctrl+Shift+P), execute the command "sql-on-fhir-toolkit-vscode: Generate DDL for the View Definition instance";  
+2.3. The DDL instructions will be shown in a new editor tab.  
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+![Generating DDL instructions for the View Definition instance](resources/images/extension_usage_ddl.gif)
 
-## Requirements
+### 3. Generating DML instructions for a dataset using a View Definition instance
+3.1. Open up a dataset according to the [ndjson](https://github.com/ndjson/ndjson-spec) format in the editor's first tab;  
+3.2. Open up a JSON file with the View Definition content in the editor's second tab;  
+3.3. Using the Command Palette ("View/Command Palette..." or Ctrl+Shift+P), execute the command "sql-on-fhir-toolkit-vscode: Generate DML for the dataset";  
+3.4. The DML instructions will be shown in a new editor tab.  
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+![Generating DML instructions for a dataset using a View Definition instance](resources/images/extension_usage_dml.gif)
 
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
+## Notes
+The extension expects the JSON representation of a resource instance's content, not its XML or Turtle versions.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 1.0.0
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+- Initial release.
+- All columns in the DDL and DML instructions are mapped to the SQL's CHARACTER VARYING data type.
